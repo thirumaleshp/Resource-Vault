@@ -320,8 +320,10 @@ const AddResourceModal = ({ isOpen, onClose, onAdd }: AddResourceModalProps) => 
                     placeholder="Add tags..."
                     className="flex-1 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm"
                     onKeyPress={(e) => {
-                      e.preventDefault();
-                      addTag();
+                      if (e.key === 'Enter') {
+                        e.preventDefault(); // Prevent default form submission or newline
+                        addTag();
+                      }
                     }}
                   />
                   <Button

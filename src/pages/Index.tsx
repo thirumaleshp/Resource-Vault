@@ -162,12 +162,28 @@ function ProfessionalTodo() {
 }
 
 const Index = () => {
-  const [resources, setResources] = useState<Resource[]>([]);
+  const [resources, setResources] = useState<Resource[]>(() => {
+    // Load resources from local storage on initial render
+    const savedResources = localStorage.getItem('resources');
+    if (savedResources) {
+      // Parse the saved resources and convert string dates back to Date objects
+      return JSON.parse(savedResources).map((resource: any) => ({
+        ...resource,
+        createdAt: new Date(resource.createdAt)
+      }));
+    }
+    return [];
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<ResourceCategory | "all" | "home">("home");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showResources, setShowResources] = useState(false);
   const [selectedType, setSelectedType] = useState<ResourceType | 'file_group' | 'all'>('all');
+
+  // Save resources to local storage whenever they change
+  useEffect(() => {
+    localStorage.setItem('resources', JSON.stringify(resources));
+  }, [resources]);
 
   const categories: (ResourceCategory | "all")[] = ["all", "watch later", "study", "work", "personal"];
   
@@ -194,12 +210,29 @@ const Index = () => {
   });
 
   const addResource = (newResource: Omit<Resource, 'id' | 'createdAt'>) => {
-    const resource: Resource = {
-      ...newResource,
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-    };
-    setResources([resource, ...resources]);
+    if (newResource.fileData) {
+      // Handle files (images, pdfs, files)
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const resource: Resource = {
+          ...newResource,
+          id: crypto.randomUUID(),
+          createdAt: new Date(),
+          fileURL: reader.result as string, // Store the data URL
+          // We don't store the File object directly in local storage
+        };
+        setResources([resource, ...resources]);
+      };
+      reader.readAsDataURL(newResource.fileData); // Read file as data URL
+    } else {
+      // Handle notes and links
+      const resource: Resource = {
+        ...newResource,
+        id: crypto.randomUUID(),
+        createdAt: new Date(),
+      };
+      setResources([resource, ...resources]);
+    }
   };
 
   const deleteResource = (id: string) => {

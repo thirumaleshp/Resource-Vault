@@ -111,7 +111,7 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
 
   return (
     <>
-      <Card className="flex-grow-0 flex-shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.3%-16px)] bg-surface-container-high hover:bg-surface-container-highest transition-colors duration-200 overflow-hidden shadow-sm">
+      <Card className="flex-grow-0 flex-shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.3%-16px)] bg-surface-container-high hover:bg-surface-container-highest transition-colors duration-200 overflow-hidden shadow-sm border-0">
         <CardContent className="p-4">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -245,8 +245,8 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
           </div>
         </CardContent>
 
-        <CardFooter className="p-4 bg-surface-container-lowest border-t border-surface-container-high">
-          <div className="flex flex-wrap gap-2">
+        <CardFooter className="pt-4">
+          <div className="flex flex-wrap gap-2 p-4 bg-surface-container-lowest rounded-lg">
             <Badge variant="secondary" className="bg-surface-container-high text-on-surface-variant">
               {resource.category}
             </Badge>
@@ -345,6 +345,7 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
 
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="dark dark:bg-surface-container-high dark:text-on-surface border-0 shadow-xl rounded-xl w-full max-w-3xl h-[80vh] flex flex-col p-6">
+          <style>{`.dark .fixed > button > svg { color: #fff !important; }`}</style>
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-on-surface dark:text-on-surface line-clamp-1 mb-4">{resource.title}</DialogTitle>
           </DialogHeader>
