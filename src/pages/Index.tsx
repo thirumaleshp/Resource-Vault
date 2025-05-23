@@ -78,6 +78,10 @@ const Index = () => {
 
   const stats = getResourceStats();
 
+  const buttonStyle = (selected: boolean) =>
+    `rounded-full px-6 transition-colors duration-200 focus:outline-none focus:ring-0 
+    ${selected ? 'bg-primary hover:bg-primary/90 text-on-primary border-none' : 'bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant border-none'}`;
+
   return (
     <div className="min-h-screen bg-surface-container-lowest dark">
       <div className="container mx-auto px-4 py-8">
@@ -93,90 +97,61 @@ const Index = () => {
 
         {/* Stats Cards styled as M3 Pills */}
         <div className="flex flex-wrap justify-center gap-4 mb-8">
-          {/* Notes Card */}
-          <Card
-            className={`flex-1 min-w-[150px] rounded-full border h-14 flex items-center justify-center shadow-none transition-colors duration-200 cursor-pointer
-              ${selectedType === 'note' 
-                ? 'bg-secondary-container hover:bg-secondary-container/90 border-transparent' 
-                : 'bg-surface-container-low hover:bg-surface-container border-outline'
-              }
-            `}
+          {/* Notes Button */}
+          <Button
             onClick={() => {
               setSelectedType('note');
               setShowResources(true);
             }}
+            className={`flex-1 min-w-[150px] h-14 text-xl font-bold ${buttonStyle(selectedType === 'note')}`}
           >
-            <CardContent className="p-0 flex flex-col items-center justify-center">
-              <div className={`text-xl font-bold ${selectedType === 'note' ? 'text-on-secondary-container' : 'text-on-surface-variant'}`}>{stats.notes}</div>
-              <div className={`text-sm ${selectedType === 'note' ? 'text-on-secondary-container' : 'text-on-surface-variant'}`}>Notes</div>
-            </CardContent>
-          </Card>
+            {stats.notes}
+            <span className="ml-2 text-sm font-normal">Notes</span>
+          </Button>
 
-          {/* Links Card */}
-          <Card
-            className={`flex-1 min-w-[150px] rounded-full border h-14 flex items-center justify-center shadow-none transition-colors duration-200 cursor-pointer
-              ${selectedType === 'link' 
-                ? 'bg-secondary-container hover:bg-secondary-container/90 border-transparent' 
-                : 'bg-surface-container-low hover:bg-surface-container border-outline'
-              }
-            `}
+          {/* Links Button */}
+          <Button
             onClick={() => {
               setSelectedType('link');
               setShowResources(true);
             }}
+            className={`flex-1 min-w-[150px] h-14 text-xl font-bold ${buttonStyle(selectedType === 'link')}`}
           >
-            <CardContent className="p-0 flex flex-col items-center justify-center">
-              <div className={`text-xl font-bold ${selectedType === 'link' ? 'text-on-secondary-container' : 'text-on-surface-variant'}`}>{stats.links}</div>
-              <div className={`text-sm ${selectedType === 'link' ? 'text-on-secondary-container' : 'text-on-surface-variant'}`}>Links</div>
-            </CardContent>
-          </Card>
+            {stats.links}
+            <span className="ml-2 text-sm font-normal">Links</span>
+          </Button>
 
-          {/* Images Card */}
-          <Card
-            className={`flex-1 min-w-[150px] rounded-full border h-14 flex items-center justify-center shadow-none transition-colors duration-200 cursor-pointer
-              ${selectedType === 'image' 
-                ? 'bg-secondary-container hover:bg-secondary-container/90 border-transparent' 
-                : 'bg-surface-container-low hover:bg-surface-container border-outline'
-              }
-            `}
+          {/* Images Button */}
+          <Button
             onClick={() => {
               setSelectedType('image');
               setShowResources(true);
             }}
+            className={`flex-1 min-w-[150px] h-14 text-xl font-bold ${buttonStyle(selectedType === 'image')}`}
           >
-            <CardContent className="p-0 flex flex-col items-center justify-center">
-              <div className={`text-xl font-bold ${selectedType === 'image' ? 'text-on-secondary-container' : 'text-on-surface-variant'}`}>{stats.images}</div>
-              <div className={`text-sm ${selectedType === 'image' ? 'text-on-secondary-container' : 'text-on-surface-variant'}`}>Images</div>
-            </CardContent>
-          </Card>
+            {stats.images}
+            <span className="ml-2 text-sm font-normal">Images</span>
+          </Button>
 
-          {/* Files Card */}
-          <Card
-            className={`flex-1 min-w-[150px] rounded-full border h-14 flex items-center justify-center shadow-none transition-colors duration-200 cursor-pointer
-              ${selectedType === 'file_group' 
-                ? 'bg-secondary-container hover:bg-secondary-container/90 border-transparent' 
-                : 'bg-surface-container-low hover:bg-surface-container border-outline'
-              }
-            `}
+          {/* Files Button */}
+          <Button
             onClick={() => {
               setSelectedType('file_group');
               setShowResources(true);
             }}
+            className={`flex-1 min-w-[150px] h-14 text-xl font-bold ${buttonStyle(selectedType === 'file_group')}`}
           >
-            <CardContent className="p-0 flex flex-col items-center justify-center">
-              <div className={`text-xl font-bold ${selectedType === 'file_group' ? 'text-on-secondary-container' : 'text-on-surface-variant'}`}>{stats.files}</div>
-              <div className={`text-sm ${selectedType === 'file_group' ? 'text-on-secondary-container' : 'text-on-surface-variant'}`}>Files</div>
-            </CardContent>
-          </Card>
+            {stats.files}
+            <span className="ml-2 text-sm font-normal">Files</span>
+          </Button>
 
           {/* Home Button */}
           <Button
-            variant="outline"
             onClick={() => {
               setSelectedType('all');
               setShowResources(false);
             }}
-            className="capitalize rounded-full px-6 bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant"
+            className={buttonStyle(selectedType === 'all')}
           >
             Home
           </Button>
@@ -200,11 +175,7 @@ const Index = () => {
                   key={category}
                   variant={selectedCategory === category ? "default" : "outline"}
                   onClick={() => setSelectedCategory(category)}
-                  className={`capitalize rounded-full px-6 ${
-                    selectedCategory === category 
-                      ? "bg-primary hover:bg-primary/90 text-on-primary" 
-                      : "bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant"
-                  }`}
+                  className={buttonStyle(selectedCategory === category)}
                 >
                   {category}
                 </Button>
