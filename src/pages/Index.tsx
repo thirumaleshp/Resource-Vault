@@ -87,17 +87,17 @@ function ProfessionalTodo() {
       <CardContent className="p-6">
         <h2 className="text-2xl font-semibold mb-4 text-primary">To-Do List</h2>
         <form onSubmit={addTodo} className="flex flex-col gap-2 mb-6">
-          <div className="flex flex-row gap-2">
+          <div className="flex flex-row gap-2 items-center">
             <Input
               ref={inputRef}
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Task title"
-              className="flex-1 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm text-sm md:text-base"
+              className="flex-1 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm text-sm md:text-base h-10"
               required
             />
             <Select value={repeat} onValueChange={setRepeat}>
-              <SelectTrigger className="w-28 md:w-32 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm px-3 text-sm md:text-base">
+              <SelectTrigger className="w-28 md:w-32 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm px-3 text-sm md:text-base h-10">
                 <SelectValue placeholder="Repeat" />
               </SelectTrigger>
               <SelectContent>
@@ -107,8 +107,8 @@ function ProfessionalTodo() {
                 <SelectItem value="monthly">Monthly</SelectItem>
               </SelectContent>
             </Select>
+            <Button type="submit" className="rounded-lg bg-primary text-on-primary hover:bg-primary/90 h-10 px-6">Add</Button>
           </div>
-          <Button type="submit" className="rounded-lg bg-primary text-on-primary hover:bg-primary/90 w-full">Add</Button>
         </form>
         <Input
           value={description}
