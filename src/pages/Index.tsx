@@ -261,7 +261,7 @@ const Index = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-primary mb-2">
-            Resource Vault
+            Vault Hub
           </h1>
           <p className="text-on-surface-variant text-lg">
             Your personal knowledge vault - all resources in one place
