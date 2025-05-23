@@ -86,8 +86,8 @@ function ProfessionalTodo() {
     <Card className="max-w-2xl mx-auto mb-8 bg-surface-container-high rounded-2xl shadow-md border-0">
       <CardContent className="p-6">
         <h2 className="text-2xl font-semibold mb-4 text-primary">To-Do List</h2>
-        <form onSubmit={addTodo} className="flex flex-col gap-2 mb-6">
-          <div className="flex flex-row gap-2 items-center">
+        <form onSubmit={addTodo} className="flex flex-col gap-2 mb-6 md:flex-row md:gap-2">
+          <div className="flex flex-row gap-2 items-center w-full md:flex-1">
             <Input
               ref={inputRef}
               value={title}
@@ -107,8 +107,8 @@ function ProfessionalTodo() {
                 <SelectItem value="monthly">Monthly</SelectItem>
               </SelectContent>
             </Select>
-            <Button type="submit" className="rounded-lg bg-primary text-on-primary hover:bg-primary/90 h-10 px-6">Add</Button>
           </div>
+          <Button type="submit" className="rounded-lg bg-primary text-on-primary hover:bg-primary/90 h-10 px-6 w-full md:w-auto md:order-none order-last">Add</Button>
         </form>
         <Input
           value={description}
