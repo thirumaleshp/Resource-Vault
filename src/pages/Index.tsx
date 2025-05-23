@@ -315,7 +315,7 @@ const Index = () => {
                 />
               </div>
             </div>
-            <div className="flex flex-row gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
+            <div className="flex flex-row gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide justify-center">
               {categories.map((category) => (
                 <Button
                   key={category}
