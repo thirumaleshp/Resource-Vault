@@ -261,7 +261,7 @@ const Index = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-primary mb-2">
-            ResourceHub
+            Resource Vault
           </h1>
           <p className="text-on-surface-variant text-lg">
             Your personal knowledge vault - all resources in one place
@@ -322,6 +322,13 @@ const Index = () => {
             <span className="ml-2 text-sm font-normal">Files</span>
           </Button>
         </div>
+
+        {/* Text message when no resource type is selected */}
+        {selectedType === 'all' && !showResources && (
+          <div className="text-center text-on-surface-variant mb-8">
+            <p>Select a resource type above to view.</p>
+          </div>
+        )}
 
         {/* Search and Filters */}
         {showResources && (
@@ -385,9 +392,6 @@ const Index = () => {
         ) : (
           <>
             {selectedType === 'all' && !showResources && <ProfessionalTodo />}
-            <div className="text-center text-on-surface-variant">
-              <p>Select a resource type above to view.</p>
-            </div>
           </>
         )}
 
