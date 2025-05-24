@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X, Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,9 @@ interface AddResourceModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (resource: Omit<Resource, 'id' | 'createdAt'>) => void;
+  customTags: string[];
+  onAddCustomCategory: (category: string) => void;
+  onDeleteCustomCategory: (category: string) => void;
 }
 
 interface Resource {
@@ -24,7 +27,7 @@ interface Resource {
   fileData?: File;
 }
 
-const AddResourceModal = ({ isOpen, onClose, onAdd }: AddResourceModalProps) => {
+const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCategory, onDeleteCustomCategory }: AddResourceModalProps) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<Resource>({
@@ -35,6 +38,9 @@ const AddResourceModal = ({ isOpen, onClose, onAdd }: AddResourceModalProps) => 
     tags: [],
   });
   const [newTag, setNewTag] = useState("");
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategory, setNewCategory] = useState("");
+  const newCategoryInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,6 +190,22 @@ const AddResourceModal = ({ isOpen, onClose, onAdd }: AddResourceModalProps) => 
     }
   };
 
+  const builtInCategories = ["watch later", "study", "work", "personal"];
+  const [customCategories, setCustomCategories] = useState<string[]>(customTags);
+  const allCategories = [...builtInCategories, ...customCategories];
+  useEffect(() => {
+    setCustomCategories(customTags);
+  }, [customTags]);
+
+  // Set default category to the first available when modal opens or categories change
+  useEffect(() => {
+    if (isOpen && allCategories.length > 0) {
+      if (!formData.category || !allCategories.includes(formData.category)) {
+        setFormData(prev => ({ ...prev, category: allCategories[0] }));
+      }
+    }
+  }, [isOpen, allCategories]);
+
   if (!isOpen) return null;
 
   return (
@@ -225,11 +247,11 @@ const AddResourceModal = ({ isOpen, onClose, onAdd }: AddResourceModalProps) => 
                       <SelectValue placeholder="Select resource type" />
                     </SelectTrigger>
                     <SelectContent className="dark:bg-surface-container dark:text-on-surface dark:border-outline">
-                      <SelectItem value="note" className="dark:text-on-surface dark:focus:bg-surface-container-highest dark:focus:text-on-surface dark:data-[state=checked]:bg-surface-container-highest dark:data-[state=checked]:text-on-surface">Note</SelectItem>
-                      <SelectItem value="link" className="dark:text-on-surface dark:focus:bg-surface-container-highest dark:focus:text-on-surface dark:data-[state=checked]:bg-surface-container-highest dark:data-[state=checked]:text-on-surface">Link</SelectItem>
-                      <SelectItem value="image" className="dark:text-on-surface dark:focus:bg-surface-container-highest dark:focus:text-on-surface dark:data-[state=checked]:bg-surface-container-highest dark:data-[state=checked]:text-on-surface">Image</SelectItem>
-                      <SelectItem value="pdf" className="dark:text-on-surface dark:focus:bg-surface-container-highest dark:focus:text-on-surface dark:data-[state=checked]:bg-surface-container-highest dark:data-[state=checked]:text-on-surface">PDF</SelectItem>
-                      <SelectItem value="file" className="dark:text-on-surface dark:focus:bg-surface-container-highest dark:focus:text-on-surface dark:data-[state=checked]:bg-surface-container-highest dark:data-[state=checked]:text-on-surface">File</SelectItem>
+                      <SelectItem value="note">Note</SelectItem>
+                      <SelectItem value="link">Link</SelectItem>
+                      <SelectItem value="image">Image</SelectItem>
+                      <SelectItem value="pdf">PDF</SelectItem>
+                      <SelectItem value="file">File</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -244,10 +266,60 @@ const AddResourceModal = ({ isOpen, onClose, onAdd }: AddResourceModalProps) => 
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent className="dark:bg-surface-container dark:text-on-surface dark:border-outline">
-                      <SelectItem value="watch later" className="dark:text-on-surface dark:focus:bg-surface-container-highest dark:focus:text-on-surface dark:data-[state=checked]:bg-surface-container-highest dark:data-[state=checked]:text-on-surface">Watch Later</SelectItem>
-                      <SelectItem value="study" className="dark:text-on-surface dark:focus:bg-surface-container-highest dark:focus:text-on-surface dark:data-[state=checked]:bg-surface-container-highest dark:data-[state=checked]:text-on-surface">Study</SelectItem>
-                      <SelectItem value="work" className="dark:text-on-surface dark:focus:bg-surface-container-highest dark:focus:text-on-surface dark:data-[state=checked]:bg-surface-container-highest dark:data-[state=checked]:text-on-surface">Work</SelectItem>
-                      <SelectItem value="personal" className="dark:text-on-surface dark:focus:bg-surface-container-highest dark:focus:text-on-surface dark:data-[state=checked]:bg-surface-container-highest dark:data-[state=checked]:text-on-surface">Personal</SelectItem>
+                      {allCategories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                        </SelectItem>
+                      ))}
+                      <div className="flex items-center gap-2 px-3 py-2 border-t border-surface-container-highest mt-2">
+                        {!isAddingCategory ? (
+                          <button
+                            type="button"
+                            className="rounded-full px-3 py-1 text-sm font-medium bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-highest"
+                            onClick={() => {
+                              setIsAddingCategory(true);
+                              setTimeout(() => newCategoryInputRef.current?.focus(), 100);
+                            }}
+                          >
+                            + Add Category
+                          </button>
+                        ) : (
+                          <input
+                            ref={newCategoryInputRef}
+                            type="text"
+                            value={newCategory}
+                            onChange={e => setNewCategory(e.target.value)}
+                            onBlur={() => setIsAddingCategory(false)}
+                            onKeyDown={e => {
+                              if (e.key === "Enter" && newCategory.trim()) {
+                                if (!customCategories.includes(newCategory.trim()) && !builtInCategories.includes(newCategory.trim())) {
+                                  const newCat = newCategory.trim();
+                                  setCustomCategories([...customCategories, newCat]);
+                                  const updatedFormData = { ...formData, category: newCat as ResourceCategory };
+                                  setFormData(updatedFormData);
+                                  setTimeout(() => {
+                                    setFormData(updatedFormData);
+                                  }, 0);
+                                  onAddCustomCategory(newCat);
+                                } else {
+                                  toast({
+                                    title: "Duplicate Category",
+                                    description: "This category already exists.",
+                                    variant: "destructive",
+                                  });
+                                }
+                                setNewCategory("");
+                                setIsAddingCategory(false);
+                              } else if (e.key === "Escape") {
+                                setIsAddingCategory(false);
+                                setNewCategory("");
+                              }
+                            }}
+                            className="rounded-full px-3 py-1 text-sm font-medium bg-surface-container-lowest text-on-surface-variant border border-surface-container-highest outline-none w-full"
+                            placeholder="New category"
+                          />
+                        )}
+                      </div>
                     </SelectContent>
                   </Select>
                 </div>

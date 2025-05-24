@@ -18,7 +18,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { getResources as idbGetResources, addResource as idbAddResource, deleteResource as idbDeleteResource, IDBResource } from "@/lib/idb";
 
 export type ResourceType = 'note' | 'link' | 'image' | 'pdf' | 'file';
-export type ResourceCategory = 'study' | 'watch later' | 'work' | 'personal';
+export type BuiltInCategory = 'study' | 'watch later' | 'work' | 'personal';
+export type ResourceCategory = BuiltInCategory | string;
 
 export interface Resource {
   id: string;
@@ -98,10 +99,10 @@ function ProfessionalTodo() {
               required
             />
             <Select value={repeat} onValueChange={setRepeat}>
-              <SelectTrigger className="w-28 md:w-32 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm px-3 text-sm md:text-base h-10">
+              <SelectTrigger className="w-28 md:w-32 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm">
                 <SelectValue placeholder="Repeat" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="dark:bg-surface-container dark:text-on-surface dark:border-outline">
                 <SelectItem value="none">No Repeat</SelectItem>
                 <SelectItem value="daily">Daily</SelectItem>
                 <SelectItem value="weekly">Weekly</SelectItem>
@@ -170,6 +171,13 @@ const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showResources, setShowResources] = useState(false);
   const [selectedType, setSelectedType] = useState<ResourceType | 'file_group' | 'all'>('all');
+  const [customTags, setCustomTags] = useState<string[]>(() => {
+    const saved = localStorage.getItem('customTags');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [isAddingTag, setIsAddingTag] = useState(false);
+  const [newTag, setNewTag] = useState("");
+  const newTagInputRef = useRef<HTMLInputElement>(null);
 
   // Load resources from IndexedDB on initial render
   useEffect(() => {
@@ -206,6 +214,10 @@ const Index = () => {
     }
     migrateAndLoad();
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('customTags', JSON.stringify(customTags));
+  }, [customTags]);
 
   const categories: (ResourceCategory | "all")[] = ["all", "watch later", "study", "work", "personal"];
   
@@ -301,6 +313,34 @@ const Index = () => {
   const buttonStyle = (selected: boolean) =>
     `rounded-full px-6 transition-colors duration-200 focus:outline-none focus:ring-0 
     ${selected ? 'bg-primary hover:bg-primary/90 text-on-primary border-none' : 'bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant border-none'}`;
+
+  const handleAddCustomCategory = (category: string) => {
+    if (!customTags.includes(category)) {
+      setCustomTags([...customTags, category]);
+      toast({
+        title: "Category Added",
+        description: `"${category}" has been added to your categories.`,
+      });
+    }
+  };
+
+  const handleDeleteCustomCategory = (category: string) => {
+    // Check if category is in use
+    const categoryInUse = resources.some(resource => resource.category === category);
+    if (categoryInUse) {
+      toast({
+        title: "Cannot Delete Category",
+        description: "This category is in use by one or more resources. Please reassign those resources first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setCustomTags(customTags.filter(tag => tag !== category));
+    toast({
+      title: "Category Deleted",
+      description: `"${category}" has been removed from your categories.`,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-surface-container-lowest dark">
@@ -413,6 +453,65 @@ const Index = () => {
                   {category}
                 </Button>
               ))}
+              {/* Custom tags */}
+              {customTags && customTags.map((tag) => (
+                <div key={tag} className="relative inline-block">
+                  <Button
+                    variant={selectedCategory === tag ? "default" : "outline"}
+                    onClick={() => setSelectedCategory(tag)}
+                    className={buttonStyle(selectedCategory === tag) + ' h-12 pr-8'}
+                  >
+                    {tag}
+                  </Button>
+                  <button
+                    onClick={() => handleDeleteCustomCategory(tag)}
+                    className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full text-xs text-on-surface-variant hover:bg-error hover:text-white transition-colors"
+                    style={{lineHeight: 1}}
+                    title={`Remove ${tag}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              {/* + Button */}
+              {!isAddingTag && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsAddingTag(true);
+                    setTimeout(() => newTagInputRef.current?.focus(), 100);
+                  }}
+                  className={buttonStyle(false) + ' h-12'}
+                  title="Add custom tag"
+                >
+                  +
+                </Button>
+              )}
+              {/* Input for new tag */}
+              {isAddingTag && (
+                <input
+                  ref={newTagInputRef}
+                  type="text"
+                  value={newTag}
+                  onChange={e => setNewTag(e.target.value)}
+                  onBlur={() => setIsAddingTag(false)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && newTag.trim()) {
+                      if (!customTags.includes(newTag.trim()) && !categories.includes(newTag.trim())) {
+                        setCustomTags([...customTags, newTag.trim()]);
+                        setSelectedCategory(newTag.trim());
+                      }
+                      setNewTag("");
+                      setIsAddingTag(false);
+                    } else if (e.key === "Escape") {
+                      setIsAddingTag(false);
+                      setNewTag("");
+                    }
+                  }}
+                  className="rounded-full px-6 py-2 text-sm font-medium bg-surface-container-lowest text-on-surface-variant border border-surface-container-highest outline-none h-12 w-32"
+                  placeholder="New tag"
+                />
+              )}
             </div>
           </div>
         )}
@@ -455,6 +554,9 @@ const Index = () => {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onAdd={addResource}
+          customTags={customTags}
+          onAddCustomCategory={handleAddCustomCategory}
+          onDeleteCustomCategory={handleDeleteCustomCategory}
         />
       </div>
     </div>
