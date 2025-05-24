@@ -119,46 +119,52 @@ function ProfessionalTodo() {
           <div className="flex-1">
             <h2 className="text-2xl font-semibold mb-4 text-primary">To-Do List</h2>
             <form onSubmit={addTodo} className="flex flex-col gap-2 mb-6">
-              {/* First row: Task title, Time picker, Repeat */}
-              <div className="flex flex-row gap-2 items-center w-full md:flex-1">
-                <Input
-                  ref={inputRef}
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  placeholder="Task title"
-                  className="basis-1/2 min-w-0 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm text-sm md:text-base h-10"
-                  required
-                />
-                <Select value={remindTime} onValueChange={setRemindTime}>
-                  <SelectTrigger className="w-32 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm">
-                    <SelectValue placeholder="Time" />
-                  </SelectTrigger>
-                  <SelectContent className="dark:bg-surface-container dark:text-on-surface dark:border-outline max-h-64 overflow-y-auto">
-                    {timeOptions.map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={repeat} onValueChange={setRepeat}>
-                  <SelectTrigger className="w-28 md:w-32 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm">
-                    <SelectValue placeholder="Repeat" />
-                  </SelectTrigger>
-                  <SelectContent className="dark:bg-surface-container dark:text-on-surface dark:border-outline">
-                    <SelectItem value="none">No Repeat</SelectItem>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* First row: Task title (half), time & repeat (fit), fills full width */}
+              <div className="flex flex-row gap-2 items-center w-full">
+                <div className="flex-1 min-w-0">
+                  <Input
+                    ref={inputRef}
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    placeholder="Task title"
+                    className="w-full bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm text-sm md:text-base h-10"
+                    required
+                  />
+                </div>
+                <div className="flex flex-row gap-2">
+                  <Select value={remindTime} onValueChange={setRemindTime}>
+                    <SelectTrigger className="w-32 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm">
+                      <SelectValue placeholder="Time" />
+                    </SelectTrigger>
+                    <SelectContent className="dark:bg-surface-container dark:text-on-surface dark:border-outline max-h-64 overflow-y-auto">
+                      {timeOptions.map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={repeat} onValueChange={setRepeat}>
+                    <SelectTrigger className="w-28 md:w-32 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm">
+                      <SelectValue placeholder="Repeat" />
+                    </SelectTrigger>
+                    <SelectContent className="dark:bg-surface-container dark:text-on-surface dark:border-outline">
+                      <SelectItem value="none">No Repeat</SelectItem>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               {/* Second row: Description and Add button */}
-              <div className="flex flex-row gap-2 items-center w-full md:flex-1">
-                <Input
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  placeholder="Description (optional)"
-                  className="basis-1/2 min-w-0 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm"
-                />
+              <div className="flex flex-row gap-2 items-center w-full">
+                <div className="flex-1 min-w-0">
+                  <Input
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    placeholder="Description (optional)"
+                    className="w-full bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm"
+                  />
+                </div>
                 <Button type="submit" className="flex-1 rounded-lg bg-primary text-on-primary hover:bg-primary/90 h-10 px-6">Add</Button>
               </div>
             </form>
@@ -227,6 +233,44 @@ const Index = () => {
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [newTag, setNewTag] = useState("");
   const newTagInputRef = useRef<HTMLInputElement>(null);
+
+  // --- Reminder Notification Logic ---
+  // Track notified task IDs for today
+  const notifiedRef = useRef<{[key: string]: string}>({}); // { [taskId]: 'YYYY-MM-DD' }
+  useEffect(() => {
+    // Request browser notification permission on mount
+    if (window.Notification && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+    const interval = setInterval(() => {
+      const now = new Date();
+      const nowStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+      const today = now.toISOString().slice(0, 10);
+      // Check all todos in localStorage
+      const todos = JSON.parse(localStorage.getItem('professional-todos') || '[]');
+      todos.forEach((todo) => {
+        if (!todo.remindTime || todo.completed) return;
+        // Normalize time string for comparison
+        const todoTime = todo.remindTime.replace(/^0/, '').replace(' 0', ' ');
+        const nowTime = nowStr.replace(/^0/, '').replace(' 0', ' ');
+        if (todoTime === nowTime && notifiedRef.current[todo.id] !== today) {
+          // In-app toast
+          toast({
+            title: `Task Reminder: ${todo.title}`,
+            description: todo.description || undefined,
+          });
+          // Browser notification
+          if (window.Notification && Notification.permission === 'granted') {
+            new Notification(`Task Reminder: ${todo.title}`, {
+              body: todo.description || 'It\'s time for your task!',
+            });
+          }
+          notifiedRef.current[todo.id] = today;
+        }
+      });
+    }, 30000); // check every 30 seconds
+    return () => clearInterval(interval);
+  }, [toast]);
 
   // Load resources from IndexedDB on initial render
   useEffect(() => {
