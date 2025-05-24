@@ -322,7 +322,7 @@ const AddResourceModal = ({ isOpen, onClose, onAdd }: AddResourceModalProps) => 
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault(); // Prevent default form submission or newline
-                        addTag();
+                      addTag();
                       }
                     }}
                   />

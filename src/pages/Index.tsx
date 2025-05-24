@@ -14,6 +14,8 @@ import {
   SelectItem
 } from "@/components/ui/select";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { useToast } from "@/components/ui/use-toast";
+import { getResources as idbGetResources, addResource as idbAddResource, deleteResource as idbDeleteResource, IDBResource } from "@/lib/idb";
 
 export type ResourceType = 'note' | 'link' | 'image' | 'pdf' | 'file';
 export type ResourceCategory = 'study' | 'watch later' | 'work' | 'personal';
@@ -26,8 +28,7 @@ export interface Resource {
   category: ResourceCategory;
   createdAt: Date;
   tags: string[];
-  fileURL?: string;
-  fileData?: File;
+  fileData?: File | Blob;
 }
 
 function ProfessionalTodo() {
@@ -162,28 +163,49 @@ function ProfessionalTodo() {
 }
 
 const Index = () => {
-  const [resources, setResources] = useState<Resource[]>(() => {
-    // Load resources from local storage on initial render
-    const savedResources = localStorage.getItem('resources');
-    if (savedResources) {
-      // Parse the saved resources and convert string dates back to Date objects
-      return JSON.parse(savedResources).map((resource: any) => ({
-        ...resource,
-        createdAt: new Date(resource.createdAt)
-      }));
-    }
-    return [];
-  });
+  const { toast } = useToast();
+  const [resources, setResources] = useState<Resource[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<ResourceCategory | "all" | "home">("home");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showResources, setShowResources] = useState(false);
   const [selectedType, setSelectedType] = useState<ResourceType | 'file_group' | 'all'>('all');
 
-  // Save resources to local storage whenever they change
+  // Load resources from IndexedDB on initial render
   useEffect(() => {
-    localStorage.setItem('resources', JSON.stringify(resources));
-  }, [resources]);
+    async function migrateAndLoad() {
+      // 1. Migration: move from localStorage to IndexedDB if needed
+      const savedResources = localStorage.getItem('resources');
+      if (savedResources) {
+        try {
+          const parsed = JSON.parse(savedResources);
+          const dbResources = await idbGetResources();
+          const dbIds = new Set(dbResources.map(r => r.id));
+          for (const r of parsed) {
+            if (!dbIds.has(r.id)) {
+              await idbAddResource({
+                ...r,
+                createdAt: (typeof r.createdAt === 'string') ? r.createdAt : new Date(r.createdAt).toISOString(),
+              });
+            }
+          }
+          localStorage.removeItem('resources');
+        } catch (e) {
+          // ignore migration errors
+        }
+      }
+      // 2. Load from IndexedDB
+      idbGetResources().then((dbResources) => {
+        setResources(dbResources.map((r) => ({
+          ...r,
+          type: r.type as ResourceType,
+          category: r.category as ResourceCategory,
+          createdAt: new Date(r.createdAt)
+        })));
+      });
+    }
+    migrateAndLoad();
+  }, []);
 
   const categories: (ResourceCategory | "all")[] = ["all", "watch later", "study", "work", "personal"];
   
@@ -202,41 +224,66 @@ const Index = () => {
                          resource.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          resource.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = selectedCategory === "all" || resource.category === selectedCategory;
-    const matchesType = selectedType === 'all' || 
-                        (selectedType === 'file_group' && (resource.type === 'pdf' || resource.type === 'file')) ||
-                        (selectedType !== 'file_group' && resource.type === selectedType);
+    let matchesType = selectedType === 'all' || 
+      (selectedType === 'file_group' && (resource.type === 'pdf' || resource.type === 'file')) ||
+      (selectedType !== 'file_group' && resource.type === selectedType);
+
+    // For images, only include resources with valid image Blob
+    if (selectedType === 'image') {
+      matchesType = resource.type === 'image' && resource.fileData &&
+        typeof (resource.fileData as Blob).type === 'string' &&
+        (resource.fileData as Blob).type.startsWith('image/');
+    }
 
     return matchesSearch && matchesCategory && matchesType;
   });
 
   const addResource = (newResource: Omit<Resource, 'id' | 'createdAt'>) => {
-    if (newResource.fileData) {
-      // Handle files (images, pdfs, files)
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const resource: Resource = {
-          ...newResource,
-          id: crypto.randomUUID(),
-          createdAt: new Date(),
-          fileURL: reader.result as string, // Store the data URL
-          // We don't store the File object directly in local storage
-        };
-        setResources([resource, ...resources]);
+    const saveResource = (resource: Resource) => {
+      const idbResource: IDBResource = {
+        ...resource,
+        createdAt: resource.createdAt.toISOString(),
+        // fileData is a Blob
       };
-      reader.readAsDataURL(newResource.fileData); // Read file as data URL
+      idbAddResource(idbResource).then(() => {
+        setResources(prev => [resource, ...prev]);
+      }).catch(() => {
+        toast({
+          title: "Storage Error",
+          description: "Failed to save resource to IndexedDB.",
+          variant: "destructive",
+        });
+      });
+    };
+    if (newResource.fileData) {
+      // Store the file as a Blob
+      const resource: Resource = {
+        ...newResource,
+        id: crypto.randomUUID(),
+        createdAt: new Date(),
+        fileData: newResource.fileData,
+      };
+      saveResource(resource);
     } else {
-      // Handle notes and links
       const resource: Resource = {
         ...newResource,
         id: crypto.randomUUID(),
         createdAt: new Date(),
       };
-      setResources([resource, ...resources]);
+      saveResource(resource);
     }
   };
 
   const deleteResource = (id: string) => {
-    setResources(resources.filter(resource => resource.id !== id));
+    idbDeleteResource(id).then(() => {
+      setResources(prev => prev.filter(resource => resource.id !== id));
+    }).catch(() => {
+      toast({
+        title: "Delete Error",
+        description: "Failed to delete resource from IndexedDB.",
+        variant: "destructive",
+      });
+    });
   };
 
   const getResourceStats = () => {
@@ -244,7 +291,7 @@ const Index = () => {
       total: resources.length,
       notes: resources.filter(r => r.type === 'note').length,
       links: resources.filter(r => r.type === 'link').length,
-      images: resources.filter(r => r.type === 'image').length,
+      images: resources.filter(r => r.type === 'image' && r.fileData && typeof (r.fileData as Blob).type === 'string' && (r.fileData as Blob).type.startsWith('image/')).length,
       files: resources.filter(r => r.type === 'pdf' || r.type === 'file').length,
     };
   };
