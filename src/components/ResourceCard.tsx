@@ -61,11 +61,14 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
   const handleViewFile = () => {
     if (resource.fileData) {
       const blobUrl = getBlobUrl(resource.fileData);
-      if (isMobile()) {
-        // On mobile, open in a new tab to prompt native app
+      if (resource.type === 'image') {
+        // Always open in-app preview for images
+        setIsPreviewOpen(true);
+      } else if (isMobile()) {
+        // On mobile, open non-image files in a new tab to prompt native app
         window.open(blobUrl, '_blank');
       } else {
-        if (resource.type === 'image' || resource.type === 'pdf') {
+        if (resource.type === 'pdf') {
           setIsPreviewOpen(true);
         } else {
           window.open(blobUrl, '_blank', 'noopener,noreferrer');
