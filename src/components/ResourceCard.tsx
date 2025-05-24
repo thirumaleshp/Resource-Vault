@@ -364,10 +364,24 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
       </Dialog>
 
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="dark dark:bg-surface-container-high dark:text-on-surface border-0 shadow-xl rounded-xl w-full max-w-3xl h-[80vh] flex flex-col p-6">
+        <DialogContent className="dark:bg-surface-container-high dark:text-on-surface border-0 shadow-xl rounded-xl w-full max-w-3xl h-[80vh] flex flex-col p-6">
           <style>{`.dark .fixed > button > svg { color: #fff !important; }`}</style>
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-on-surface dark:text-on-surface line-clamp-1 mb-4">{resource.title}</DialogTitle>
+            <div className="flex items-center gap-2 mb-4">
+              <DialogTitle className="text-2xl font-bold text-on-surface dark:text-on-surface line-clamp-1 flex items-center gap-2">
+                {resource.title}
+                {resource.type === 'pdf' && getBlobUrl(resource.fileData) && (
+                  <button
+                    onClick={() => window.open(getBlobUrl(resource.fileData), '_blank', 'noopener,noreferrer')}
+                    className="ml-2 px-4 py-1 flex items-center gap-2 rounded-full bg-surface-container-lowest hover:bg-surface-container-highest focus:outline-none text-sm font-semibold text-on-surface-variant shadow-none"
+                    title="Open in New Tab"
+                  >
+                    <ExternalLink className="w-5 h-5 text-on-surface-variant" />
+                    <span>Open in New Tab</span>
+                  </button>
+                )}
+              </DialogTitle>
+            </div>
           </DialogHeader>
           <div className="flex-1 overflow-hidden flex items-center justify-center dark:bg-surface-container-lowest">
              {resource.type === 'image' && getBlobUrl(resource.fileData) && (
