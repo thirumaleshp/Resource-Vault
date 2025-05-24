@@ -34,6 +34,8 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const { toast } = useToast();
 
+  const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(resource.content);
@@ -58,10 +60,16 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
 
   const handleViewFile = () => {
     if (resource.fileData) {
-      if (resource.type === 'image' || resource.type === 'pdf') {
-        setIsPreviewOpen(true);
+      const blobUrl = getBlobUrl(resource.fileData);
+      if (isMobile()) {
+        // On mobile, open in a new tab to prompt native app
+        window.open(blobUrl, '_blank');
       } else {
-        window.open(getBlobUrl(resource.fileData), '_blank', 'noopener,noreferrer');
+        if (resource.type === 'image' || resource.type === 'pdf') {
+          setIsPreviewOpen(true);
+        } else {
+          window.open(blobUrl, '_blank', 'noopener,noreferrer');
+        }
       }
     } else {
        toast({
