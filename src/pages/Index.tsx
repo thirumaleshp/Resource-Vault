@@ -441,14 +441,25 @@ const Index = () => {
     <div className="min-h-screen bg-surface-container-lowest dark">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary mb-2">
-            Vault Hub
-          </h1>
-          <p className="text-on-surface-variant text-lg">
-            Your personal knowledge vault - all resources in one place
-          </p>
-        </div>
+        {selectedCategory === 'home' ? (
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-primary mb-2">
+              Vault Hub
+            </h1>
+            <p className="text-on-surface-variant text-lg">
+              Your personal knowledge vault - all resources in one place
+            </p>
+          </div>
+        ) : (
+          <div className="text-center mb-8 hidden md:block">
+            <h1 className="text-4xl font-bold text-primary mb-2">
+              Vault Hub
+            </h1>
+            <p className="text-on-surface-variant text-lg">
+              Your personal knowledge vault - all resources in one place
+            </p>
+          </div>
+        )}
 
         {/* Stats Cards styled as M3 Pills */}
         <div className="flex flex-wrap justify-center gap-4 mb-8">
