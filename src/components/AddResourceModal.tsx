@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Plus, Upload } from "lucide-react";
+import { X, Plus, Upload, Mic, StopCircle, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,8 @@ interface Resource {
   tags: string[];
   fileURL?: string;
   fileData?: File;
+  audioBlob?: Blob;
+  audioURL?: string;
 }
 
 const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCategory, onDeleteCustomCategory }: AddResourceModalProps) => {
@@ -41,13 +43,21 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const newCategoryInputRef = useRef<HTMLInputElement>(null);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioURL, setAudioURL] = useState<string | null>(null);
+  const audioChunks = useRef<Blob[]>([]);
+  const audioPlayerRef = useRef<HTMLAudioElement>(null);
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    onAdd(formData);
+    onAdd({ ...formData, audioBlob });
     onClose();
     resetForm();
+    removeAudio();
   };
 
   const validateForm = () => {
@@ -60,10 +70,19 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
       return false;
     }
 
-    if ((formData.type === 'note' || formData.type === 'link') && !formData.content.trim()) {
+    if (formData.type === 'note' && !formData.content.trim() && !audioBlob) {
       toast({
         title: "Missing Content",
-        description: `Please provide ${formData.type === 'note' ? 'content' : 'a URL'} for your resource.`,
+        description: "Please provide content or a voice note for your resource.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.type === 'link' && !formData.content.trim()) {
+      toast({
+        title: "Missing Content",
+        description: "Please provide a URL for your resource.",
         variant: "destructive",
       });
       return false;
@@ -206,6 +225,54 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
     }
   }, [isOpen, allCategories]);
 
+  // Handle recording
+  const startRecording = async () => {
+    if (!navigator.mediaDevices) {
+      toast({ title: "Not Supported", description: "Audio recording is not supported in this browser.", variant: "destructive" });
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMediaStream(stream);
+      const recorder = new MediaRecorder(stream);
+      setMediaRecorder(recorder);
+      audioChunks.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunks.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(audioChunks.current, { type: 'audio/webm' });
+        setAudioBlob(blob);
+        setAudioURL(URL.createObjectURL(blob));
+        if (mediaStream) {
+          mediaStream.getTracks().forEach(track => track.stop());
+          setMediaStream(null);
+        }
+      };
+      recorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      toast({ title: "Microphone Error", description: "Could not access microphone.", variant: "destructive" });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      setIsRecording(false);
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        setMediaStream(null);
+      }
+    }
+  };
+
+  const removeAudio = () => {
+    setAudioBlob(null);
+    setAudioURL(null);
+    audioChunks.current = [];
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -329,13 +396,35 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
                 <div className="space-y-2">
                   <Label htmlFor="content" className="text-on-surface">{formData.type === 'note' ? 'Content' : 'URL'}</Label>
                   {formData.type === 'note' ? (
-                    <Textarea
-                      id="content"
-                      value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      placeholder="Enter notes here..."
-                      className="bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm min-h-[100px]"
-                    />
+                    <div className="relative">
+                      <Textarea
+                        id="content"
+                        value={formData.content}
+                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                        placeholder="Enter notes here..."
+                        className="bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm min-h-[100px] pr-12"
+                      />
+                      <div className="absolute top-2 right-2 flex items-center">
+                        {!isRecording && (
+                          <Button type="button" variant="outline" onClick={startRecording} className="rounded-full p-2" title="Record Voice Note">
+                            <Mic className="w-5 h-5" />
+                          </Button>
+                        )}
+                        {isRecording && (
+                          <Button type="button" variant="destructive" onClick={stopRecording} className="rounded-full p-2 animate-pulse" title="Stop Recording">
+                            <StopCircle className="w-5 h-5" />
+                          </Button>
+                        )}
+                      </div>
+                      {audioBlob && audioURL && !isRecording && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <audio ref={audioPlayerRef} src={audioURL} controls className="h-8" />
+                          <Button type="button" variant="ghost" onClick={removeAudio} className="rounded-full p-2" title="Remove Voice Note">
+                            <X className="w-5 h-5" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <Input
                       id="content"

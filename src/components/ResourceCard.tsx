@@ -122,6 +122,9 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
       year: 'numeric',
       month: 'short',
       day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
     }).format(date);
   };
 
@@ -193,9 +196,42 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
 
           <div className="space-y-4">
             {resource.type === 'note' && (
-              <div className="p-4 bg-surface-container-lowest rounded-lg">
-                <p className="text-on-surface-variant line-clamp-3">{resource.content}</p>
-              </div>
+              <>
+                {resource.content && (
+                  <div className="p-4 bg-surface-container-lowest rounded-lg mb-2">
+                    <p className="text-on-surface-variant line-clamp-3">{resource.content}</p>
+                  </div>
+                )}
+                {(resource.audioBlob || resource.audioURL) && (
+                  <div className="bg-surface-container-high rounded-2xl p-4 shadow-sm flex items-center justify-center">
+                    <style>{`
+                      .custom-audio-player {
+                        background: transparent;
+                        border-radius: 0.75rem;
+                        width: 100%;
+                        display: block;
+                      }
+                      .custom-audio-player::-webkit-media-controls-panel {
+                        background: transparent;
+                        border-radius: 0.75rem;
+                      }
+                      .custom-audio-player::-webkit-media-controls-play-button,
+                      .custom-audio-player::-webkit-media-controls-timeline,
+                      .custom-audio-player::-webkit-media-controls-current-time-display,
+                      .custom-audio-player::-webkit-media-controls-time-remaining-display,
+                      .custom-audio-player::-webkit-media-controls-volume-slider,
+                      .custom-audio-player::-webkit-media-controls-mute-button,
+                      .custom-audio-player::-webkit-media-controls-enclosure {
+                        border-radius: 0.75rem;
+                      }
+                    `}</style>
+                    <audio controls className="custom-audio-player">
+                      <source src={resource.audioBlob ? URL.createObjectURL(resource.audioBlob) : resource.audioURL} type="audio/webm" />
+                      Your browser does not support the audio element.
+                    </audio>
+                  </div>
+                )}
+              </>
             )}
             {resource.type === 'link' && (
               <div className="p-4 bg-surface-container-lowest rounded-lg">

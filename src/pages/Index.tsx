@@ -30,6 +30,8 @@ export interface Resource {
   createdAt: Date;
   tags: string[];
   fileData?: File | Blob;
+  audioBlob?: Blob;
+  audioURL?: string;
 }
 
 function ProfessionalTodo() {
@@ -120,8 +122,8 @@ function ProfessionalTodo() {
             <h2 className="text-2xl font-semibold mb-4 text-primary">To-Do List</h2>
             <form onSubmit={addTodo} className="flex flex-col gap-2 mb-6">
               {/* First row: Task title (half), time & repeat (fit), fills full width */}
-              <div className="flex flex-row gap-2 items-center w-full">
-                <div className="flex-1 min-w-0">
+              <div className="flex flex-col gap-2 w-full md:flex-row md:items-center">
+                <div className="w-full md:flex-1 min-w-0">
                   <Input
                     ref={inputRef}
                     value={title}
@@ -131,9 +133,9 @@ function ProfessionalTodo() {
                     required
                   />
                 </div>
-                <div className="flex flex-row gap-2">
+                <div className="flex flex-row gap-2 w-full md:w-auto">
                   <Select value={remindTime} onValueChange={setRemindTime}>
-                    <SelectTrigger className="w-32 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm">
+                    <SelectTrigger className="w-full md:w-32 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm">
                       <SelectValue placeholder="Time" />
                     </SelectTrigger>
                     <SelectContent className="dark:bg-surface-container dark:text-on-surface dark:border-outline max-h-64 overflow-y-auto">
@@ -143,7 +145,7 @@ function ProfessionalTodo() {
                     </SelectContent>
                   </Select>
                   <Select value={repeat} onValueChange={setRepeat}>
-                    <SelectTrigger className="w-28 md:w-32 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm">
+                    <SelectTrigger className="w-full md:w-28 md:w-32 bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm">
                       <SelectValue placeholder="Repeat" />
                     </SelectTrigger>
                     <SelectContent className="dark:bg-surface-container dark:text-on-surface dark:border-outline">
