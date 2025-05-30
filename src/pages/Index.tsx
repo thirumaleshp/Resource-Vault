@@ -537,24 +537,24 @@ const Index = () => {
                 />
               </div>
             </div>
-            <div className="flex flex-row gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide justify-center">
+            <div className="flex flex-row gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide pl-4 pr-4">
               {categories.map((category) => (
                 <Button
                   key={category}
                   variant={selectedCategory === category ? "default" : "outline"}
                   onClick={() => setSelectedCategory(category)}
-                  className={buttonStyle(selectedCategory === category) + ' h-12'}
+                  className={buttonStyle(selectedCategory === category) + ' h-12 min-w-max'}
                 >
                   {category}
                 </Button>
               ))}
               {/* Custom tags */}
               {customTags && customTags.map((tag) => (
-                <div key={tag} className="relative inline-block">
+                <div key={tag} className="relative inline-block min-w-max">
                   <Button
                     variant={selectedCategory === tag ? "default" : "outline"}
                     onClick={() => setSelectedCategory(tag)}
-                    className={buttonStyle(selectedCategory === tag) + ' h-12 pr-8'}
+                    className={buttonStyle(selectedCategory === tag) + ' h-12 pr-8 min-w-max'}
                   >
                     {tag}
                   </Button>
@@ -576,7 +576,7 @@ const Index = () => {
                     setIsAddingTag(true);
                     setTimeout(() => newTagInputRef.current?.focus(), 100);
                   }}
-                  className={buttonStyle(false) + ' h-12'}
+                  className={buttonStyle(false) + ' h-12 min-w-max'}
                   title="Add custom tag"
                 >
                   +
@@ -598,12 +598,9 @@ const Index = () => {
                       }
                       setNewTag("");
                       setIsAddingTag(false);
-                    } else if (e.key === "Escape") {
-                      setIsAddingTag(false);
-                      setNewTag("");
                     }
                   }}
-                  className="rounded-full px-6 py-2 text-sm font-medium bg-surface-container-lowest text-on-surface-variant border border-surface-container-highest outline-none h-12 w-32"
+                  className="h-12 px-4 rounded-full bg-surface-container-high text-on-surface-variant border-none shadow-sm min-w-max"
                   placeholder="New tag"
                 />
               )}
