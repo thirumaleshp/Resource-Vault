@@ -51,8 +51,11 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
   const audioPlayerRef = useRef<HTMLAudioElement>(null);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isRecording) {
+      await stopRecording(true); // pass true to indicate we want to wait for audioBlob
+    }
     if (!validateForm()) return;
     onAdd({ ...formData, audioBlob });
     onClose();
@@ -256,15 +259,29 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
     }
   };
 
-  const stopRecording = () => {
+  // Accept a waitForBlob argument to wait for audioBlob to be set
+  const stopRecording = (waitForBlob = false) => {
     if (mediaRecorder && isRecording) {
-      mediaRecorder.stop();
-      setIsRecording(false);
-      if (mediaStream) {
-        mediaStream.getTracks().forEach(track => track.stop());
-        setMediaStream(null);
-      }
+      return new Promise<void>(resolve => {
+        const handleStop = () => {
+          setTimeout(() => {
+            mediaRecorder.removeEventListener('stop', handleStop);
+            resolve();
+          }, 50); // small delay to ensure audioBlob is set
+        };
+        if (waitForBlob) {
+          mediaRecorder.addEventListener('stop', handleStop);
+        }
+        mediaRecorder.stop();
+        setIsRecording(false);
+        if (mediaStream) {
+          mediaStream.getTracks().forEach(track => track.stop());
+          setMediaStream(null);
+        }
+        if (!waitForBlob) resolve();
+      });
     }
+    return Promise.resolve();
   };
 
   const removeAudio = () => {
@@ -396,13 +413,13 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
                 <div className="space-y-2">
                   <Label htmlFor="content" className="text-on-surface">{formData.type === 'note' ? 'Content' : 'URL'}</Label>
                   {formData.type === 'note' ? (
-                    <div className="relative">
+                    <div className="relative flex flex-col bg-surface-container-lowest rounded-lg shadow-sm p-0">
                       <Textarea
                         id="content"
                         value={formData.content}
                         onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                         placeholder="Enter notes here..."
-                        className="bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm min-h-[100px] pr-12"
+                        className="bg-transparent text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-none min-h-[100px] pr-12"
                       />
                       <div className="absolute top-2 right-2 flex items-center">
                         {!isRecording && (
@@ -411,14 +428,14 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
                           </Button>
                         )}
                         {isRecording && (
-                          <Button type="button" variant="destructive" onClick={stopRecording} className="rounded-full p-2 animate-pulse" title="Stop Recording">
+                          <Button type="button" variant="destructive" onClick={() => stopRecording()} className="rounded-full p-2 animate-pulse" title="Stop Recording">
                             <StopCircle className="w-5 h-5" />
                           </Button>
                         )}
                       </div>
                       {audioBlob && audioURL && !isRecording && (
-                        <div className="mt-2 flex items-center gap-2">
-                          <audio ref={audioPlayerRef} src={audioURL} controls className="h-8" />
+                        <div className="flex items-center gap-2 px-4 pb-3 pt-2">
+                          <audio ref={audioPlayerRef} src={audioURL} controls className="h-8 w-full rounded-2xl bg-surface-container-high" />
                           <Button type="button" variant="ghost" onClick={removeAudio} className="rounded-full p-2" title="Remove Voice Note">
                             <X className="w-5 h-5" />
                           </Button>
