@@ -274,7 +274,7 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
             )}
             {resource.type === 'image' && resource.images && resource.images.length > 0 && (
               <div
-                className="relative w-full aspect-video min-h-[120px] sm:min-h-[150px] rounded-lg overflow-hidden bg-surface-container-lowest cursor-pointer flex items-center justify-center mt-2"
+                className="relative aspect-video rounded-lg overflow-hidden bg-surface-container-lowest cursor-pointer flex items-center justify-center mt-2 min-h-[120px] sm:min-h-[150px]"
                 style={{ backgroundColor: '#222' }}
                 onClick={handleViewFile}
               >
@@ -477,27 +477,32 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
               >
-                <button
-                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-surface-container-high rounded-full p-2 shadow hover:bg-surface-container-highest"
-                  onClick={() => setCarouselIndex((prev) => (prev - 1 + resource.images.length) % resource.images.length)}
-                  disabled={resource.images.length <= 1}
-                  style={{ opacity: resource.images.length <= 1 ? 0.5 : 1 }}
-                >
-                  &#8592;
-                </button>
+                {/* Show arrows only on desktop */}
+                {!isMobile() && (
+                  <>
+                    <button
+                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-surface-container-high rounded-full p-2 shadow hover:bg-surface-container-highest"
+                      onClick={() => setCarouselIndex((prev) => (prev - 1 + (resource.images?.length || 1)) % (resource.images?.length || 1))}
+                      disabled={resource.images.length <= 1}
+                      style={{ opacity: resource.images.length <= 1 ? 0.5 : 1 }}
+                    >
+                      &#8592;
+                    </button>
+                    <button
+                      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-surface-container-high rounded-full p-2 shadow hover:bg-surface-container-highest"
+                      onClick={() => setCarouselIndex((prev) => (prev + 1) % (resource.images?.length || 1))}
+                      disabled={resource.images.length <= 1}
+                      style={{ opacity: resource.images.length <= 1 ? 0.5 : 1 }}
+                    >
+                      &#8594;
+                    </button>
+                  </>
+                )}
                 <img
                   src={getBlobUrl(resource.images[carouselIndex])}
                   alt={`Preview ${carouselIndex + 1}`}
                   className="object-contain w-full h-full rounded-xl"
                 />
-                <button
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-surface-container-high rounded-full p-2 shadow hover:bg-surface-container-highest"
-                  onClick={() => setCarouselIndex((prev) => (prev + 1) % resource.images.length)}
-                  disabled={resource.images.length <= 1}
-                  style={{ opacity: resource.images.length <= 1 ? 0.5 : 1 }}
-                >
-                  &#8594;
-                </button>
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-surface-container-high px-3 py-1 rounded-full text-xs text-on-surface-variant">
                   {carouselIndex + 1} / {resource.images.length}
                 </div>
