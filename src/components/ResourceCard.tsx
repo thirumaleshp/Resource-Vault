@@ -33,6 +33,8 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
   const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
   const { toast } = useToast();
 
   const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -127,6 +129,29 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
       minute: '2-digit',
       hour12: true
     }).format(date);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    setTouchEndX(e.touches[0].clientX);
+  };
+  const handleTouchEnd = () => {
+    if (touchStartX !== null && touchEndX !== null) {
+      const diff = touchStartX - touchEndX;
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) {
+          // Swipe left
+          setCarouselIndex((prev) => (prev + 1) % (resource.images?.length || 1));
+        } else {
+          // Swipe right
+          setCarouselIndex((prev) => (prev - 1 + (resource.images?.length || 1)) % (resource.images?.length || 1));
+        }
+      }
+    }
+    setTouchStartX(null);
+    setTouchEndX(null);
   };
 
   return (
@@ -249,7 +274,8 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
             )}
             {resource.type === 'image' && resource.images && resource.images.length > 0 && (
               <div
-                className="relative aspect-video rounded-lg overflow-hidden bg-surface-container-lowest cursor-pointer flex items-center justify-center mt-2 min-h-[150px]"
+                className="relative w-full aspect-video min-h-[120px] sm:min-h-[150px] rounded-lg overflow-hidden bg-surface-container-lowest cursor-pointer flex items-center justify-center mt-2"
+                style={{ backgroundColor: '#222' }}
                 onClick={handleViewFile}
               >
                 {/* 1 image: full */}
@@ -446,7 +472,11 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
           </DialogHeader>
           <div className="flex-1 overflow-hidden flex items-center justify-center dark:bg-surface-container-lowest relative">
             {resource.type === 'image' && resource.images && resource.images.length > 0 && (
-              <div className="relative w-full h-full flex items-center justify-center">
+              <div className="relative w-full h-full flex items-center justify-center"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
                 <button
                   className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-surface-container-high rounded-full p-2 shadow hover:bg-surface-container-highest"
                   onClick={() => setCarouselIndex((prev) => (prev - 1 + resource.images.length) % resource.images.length)}
