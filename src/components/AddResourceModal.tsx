@@ -52,8 +52,6 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
   const audioChunks = useRef<Blob[]>([]);
   const audioPlayerRef = useRef<HTMLAudioElement>(null);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-  const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  const [showCategoryInput, setShowCategoryInput] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -348,77 +346,64 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
                         </SelectItem>
                       ))}
                       <div className="flex items-center gap-2 px-3 py-2 border-t border-surface-container-highest mt-2">
-                        {!isMobile() ? (
-                          !isAddingCategory ? (
-                            <button
-                              type="button"
-                              className="rounded-full px-3 py-1 text-sm font-medium bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-highest"
-                              onClick={() => {
-                                setIsAddingCategory(true);
-                                setTimeout(() => newCategoryInputRef.current?.focus(), 100);
-                              }}
-                            >
-                              + Add Category
-                            </button>
-                          ) : (
-                            <div className="flex items-center gap-2 w-full">
-                              <input
-                                ref={newCategoryInputRef}
-                                type="text"
-                                value={newCategory}
-                                onChange={e => setNewCategory(e.target.value)}
-                                onKeyDown={e => {
-                                  if (e.key === "Enter" && newCategory.trim()) {
-                                    if (!customCategories.includes(newCategory.trim()) && !builtInCategories.includes(newCategory.trim())) {
-                                      const newCat = newCategory.trim();
-                                      setCustomCategories([...customCategories, newCat]);
-                                      const updatedFormData = { ...formData, category: newCat as ResourceCategory };
-                                      setFormData(updatedFormData);
-                                      setTimeout(() => {
-                                        setFormData(updatedFormData);
-                                      }, 0);
-                                      onAddCustomCategory(newCat);
-                                    } else {
-                                      toast({
-                                        title: "Duplicate Category",
-                                        description: "This category already exists.",
-                                        variant: "destructive",
-                                      });
-                                    }
-                                    setNewCategory("");
-                                    setIsAddingCategory(false);
-                                  } else if (e.key === "Escape") {
-                                    setIsAddingCategory(false);
-                                    setNewCategory("");
-                                  }
-                                }}
-                                className="rounded-full px-3 py-1 text-sm font-medium bg-surface-container-lowest text-on-surface-variant border border-surface-container-highest outline-none w-full"
-                                placeholder="New category"
-                              />
-                              <button
-                                type="button"
-                                className="ml-1 p-1 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant"
-                                onClick={() => {
-                                  setIsAddingCategory(false);
-                                  setNewCategory("");
-                                }}
-                                title="Cancel"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )
-                        ) : (
+                        {!isAddingCategory ? (
                           <button
                             type="button"
                             className="rounded-full px-3 py-1 text-sm font-medium bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-highest"
                             onClick={() => {
-                              setShowCategoryInput(true);
+                              setIsAddingCategory(true);
                               setTimeout(() => newCategoryInputRef.current?.focus(), 100);
                             }}
                           >
                             + Add Category
                           </button>
+                        ) : (
+                          <div className="flex items-center gap-2 w-full">
+                            <input
+                              ref={newCategoryInputRef}
+                              type="text"
+                              value={newCategory}
+                              onChange={e => setNewCategory(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === "Enter" && newCategory.trim()) {
+                                  if (!customCategories.includes(newCategory.trim()) && !builtInCategories.includes(newCategory.trim())) {
+                                    const newCat = newCategory.trim();
+                                    setCustomCategories([...customCategories, newCat]);
+                                    const updatedFormData = { ...formData, category: newCat as ResourceCategory };
+                                    setFormData(updatedFormData);
+                                    setTimeout(() => {
+                                      setFormData(updatedFormData);
+                                    }, 0);
+                                    onAddCustomCategory(newCat);
+                                  } else {
+                                    toast({
+                                      title: "Duplicate Category",
+                                      description: "This category already exists.",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                  setNewCategory("");
+                                  setIsAddingCategory(false);
+                                } else if (e.key === "Escape") {
+                                  setIsAddingCategory(false);
+                                  setNewCategory("");
+                                }
+                              }}
+                              className="rounded-full px-3 py-1 text-sm font-medium bg-surface-container-lowest text-on-surface-variant border border-surface-container-highest outline-none w-full"
+                              placeholder="New category"
+                            />
+                            <button
+                              type="button"
+                              className="ml-1 p-1 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant"
+                              onClick={() => {
+                                setIsAddingCategory(false);
+                                setNewCategory("");
+                              }}
+                              title="Cancel"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
                         )}
                       </div>
                     </SelectContent>
@@ -581,55 +566,6 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
                   ))}
                 </div>
               </div>
-
-              {isMobile() && showCategoryInput && (
-                <div className="flex items-center gap-2 mt-2">
-                  <input
-                    ref={newCategoryInputRef}
-                    type="text"
-                    value={newCategory}
-                    onChange={e => setNewCategory(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === "Enter" && newCategory.trim()) {
-                        if (!customCategories.includes(newCategory.trim()) && !builtInCategories.includes(newCategory.trim())) {
-                          const newCat = newCategory.trim();
-                          setCustomCategories([...customCategories, newCat]);
-                          const updatedFormData = { ...formData, category: newCat as ResourceCategory };
-                          setFormData(updatedFormData);
-                          setTimeout(() => {
-                            setFormData(updatedFormData);
-                          }, 0);
-                          onAddCustomCategory(newCat);
-                        } else {
-                          toast({
-                            title: "Duplicate Category",
-                            description: "This category already exists.",
-                            variant: "destructive",
-                          });
-                        }
-                        setNewCategory("");
-                        setShowCategoryInput(false);
-                      } else if (e.key === "Escape") {
-                        setShowCategoryInput(false);
-                        setNewCategory("");
-                      }
-                    }}
-                    className="rounded-full px-3 py-1 text-sm font-medium bg-surface-container-lowest text-on-surface-variant border border-surface-container-highest outline-none w-full"
-                    placeholder="New category"
-                  />
-                  <button
-                    type="button"
-                    className="ml-1 p-1 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant"
-                    onClick={() => {
-                      setShowCategoryInput(false);
-                      setNewCategory("");
-                    }}
-                    title="Cancel"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
 
               <div className="flex justify-end gap-4 pt-4">
                 <Button
