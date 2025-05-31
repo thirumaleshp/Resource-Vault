@@ -249,7 +249,7 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
             )}
             {resource.type === 'image' && resource.images && resource.images.length > 0 && (
               <div
-                className="relative aspect-video rounded-lg overflow-hidden bg-surface-container-lowest cursor-pointer flex items-center justify-center mt-2"
+                className="relative aspect-video rounded-lg overflow-hidden bg-surface-container-lowest cursor-pointer flex items-center justify-center mt-2 min-h-[150px]"
                 onClick={handleViewFile}
               >
                 {/* 1 image: full */}
