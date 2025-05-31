@@ -23,6 +23,7 @@ interface Resource {
   content: string;
   category: ResourceCategory;
   tags: string[];
+  images?: File[];
   fileURL?: string;
   fileData?: File;
   audioBlob?: Blob;
@@ -38,6 +39,7 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
     content: "",
     category: "watch later",
     tags: [],
+    images: [],
   });
   const [newTag, setNewTag] = useState("");
   const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -57,7 +59,7 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
       await stopRecording(true); // pass true to indicate we want to wait for audioBlob
     }
     if (!validateForm()) return;
-    onAdd({ ...formData, audioBlob });
+    onAdd({ ...formData, audioBlob, images: formData.images });
     onClose();
     resetForm();
     removeAudio();
@@ -124,61 +126,48 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    // Clear previous file data before validation
-    setFormData(prev => ({
-      ...prev,
-      fileData: undefined,
-      fileURL: undefined
-    }));
-
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: "File Too Large",
-        description: "Please select a file smaller than 10MB.",
-        variant: "destructive",
-      });
-      if (fileInputRef.current) { // Clear the file input as well
-        fileInputRef.current.value = "";
+    // Only for images, allow multiple and append
+    if (formData.type === 'image') {
+      const validFiles: File[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.type.startsWith('image/') || file.name.match(/\.(heic|heif)$/i)) {
+          validFiles.push(file);
+        }
       }
-      return; // Exit if validation fails
+      setFormData(prev => ({
+        ...prev,
+        images: prev.images ? [...prev.images, ...validFiles] : [...validFiles],
+        fileData: prev.images && prev.images.length > 0 ? prev.images[0] : validFiles[0],
+        fileURL: URL.createObjectURL(validFiles[0])
+      }));
+      return;
     }
 
-    // Validate file type based on resource type
-    const fileType = file.type;
-    if (formData.type === 'image' && !fileType.startsWith('image/')) {
-      toast({
-        title: "Invalid File Type",
-        description: "Please select an image file.",
-        variant: "destructive",
-      });
-       if (fileInputRef.current) { // Clear the file input as well
-        fileInputRef.current.value = "";
+    // Validate file type for non-image types
+    if (['pdf', 'file'].includes(formData.type)) {
+      const fileType = files[0].type;
+      if (formData.type === 'pdf' && fileType !== 'application/pdf') {
+        toast({
+          title: "Invalid File Type",
+          description: "Please select a PDF file.",
+          variant: "destructive",
+        });
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        return;
       }
-      return; // Exit if validation fails
+      setFormData(prev => ({
+        ...prev,
+        fileData: files[0],
+        fileURL: URL.createObjectURL(files[0])
+      }));
     }
-    if (formData.type === 'pdf' && fileType !== 'application/pdf') {
-      toast({
-        title: "Invalid File Type",
-        description: "Please select a PDF file.",
-        variant: "destructive",
-      });
-       if (fileInputRef.current) { // Clear the file input as well
-        fileInputRef.current.value = "";
-      }
-      return; // Exit if validation fails
-    }
-
-    // If all validations pass, update the state with the valid file
-    setFormData(prev => ({
-      ...prev,
-      fileData: file,
-      fileURL: URL.createObjectURL(file)
-    }));
   };
 
   const addTag = () => {
@@ -205,6 +194,7 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
       content: "",
       category: "watch later",
       tags: [],
+      images: [],
     });
     setNewTag("");
     if (fileInputRef.current) {
@@ -464,10 +454,11 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
                       ref={fileInputRef}
                       onChange={handleFileChange}
                       accept={
-                        formData.type === 'image' ? 'image/*' :
+                        formData.type === 'image' ? 'image/*,.heic,.heif' :
                         formData.type === 'pdf' ? '.pdf' :
                         '*/*'
                       }
+                      multiple={formData.type === 'image'}
                       className="hidden"
                     />
                     <Button
@@ -479,11 +470,44 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
                       <Upload className="w-4 h-4 mr-2" />
                       Choose File
                     </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="ml-2 px-3 py-2 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant"
+                      title="Add more images"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
                   </div>
                   {formData.fileData && (
                     <p className="text-sm text-on-surface mt-2">
                       Selected: {formData.fileData.name}
                     </p>
+                  )}
+                  {formData.type === 'image' && formData.images && formData.images.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {formData.images.map((img, idx) => (
+                        <div key={idx} className="relative w-16 h-16 rounded overflow-hidden border border-surface-container-highest">
+                          <img
+                            src={URL.createObjectURL(img)}
+                            alt={`Selected ${idx+1}`}
+                            className="object-cover w-full h-full"
+                          />
+                          <button
+                            type="button"
+                            className="absolute top-0 right-0 bg-error text-white rounded-full p-1"
+                            onClick={() => setFormData(prev => ({
+                              ...prev,
+                              images: prev.images?.filter((_, i) => i !== idx)
+                            }))}
+                            title="Remove image"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               )}

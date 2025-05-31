@@ -24,7 +24,7 @@ interface ResourceCardProps {
   getResourceTypeIcon: (type: ResourceType) => JSX.Element;
 }
 
-// Helper to get a Blob URL for fileData
+// Helper to get a Blob URL for fileData or File
 function getBlobUrl(fileData?: File | Blob) {
   return fileData ? URL.createObjectURL(fileData) : undefined;
 }
@@ -32,6 +32,7 @@ function getBlobUrl(fileData?: File | Blob) {
 const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardProps) => {
   const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [carouselIndex, setCarouselIndex] = useState(0);
   const { toast } = useToast();
 
   const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -246,24 +247,54 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
                 </a>
               </div>
             )}
-            {resource.type === 'image' && getBlobUrl(resource.fileData) && (
+            {resource.type === 'image' && resource.images && resource.images.length > 0 && (
               <div
-                className="relative aspect-video rounded-lg overflow-hidden bg-surface-container-lowest cursor-pointer"
+                className="relative aspect-video rounded-lg overflow-hidden bg-surface-container-lowest cursor-pointer flex items-center justify-center mt-2"
                 onClick={handleViewFile}
               >
-                <img
-                  src={getBlobUrl(resource.fileData)}
-                  alt={resource.title}
-                  className="object-cover w-full h-full"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = 'data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'lucide lucide-image\'><rect width=\'18\' height=\'18\' x=\'3\' y=\'3\' rx=\'2\' ry=\'2\'/><circle cx=\'9\' cy=\'9\' r=\'2\'/><path d=\'m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21\'/></svg>';
-                    target.onerror = null;
-                  }}
-                  onLoad={(e) => {
-                    // Optionally, you can set a flag if the image loads successfully
-                  }}
-                />
+                {/* 1 image: full */}
+                {resource.images.length === 1 && (
+                  <img src={getBlobUrl(resource.images[0])} alt={resource.title} className="object-cover w-full h-full" />
+                )}
+                {/* 2 images: side by side */}
+                {resource.images.length === 2 && (
+                  <>
+                    <img src={getBlobUrl(resource.images[0])} alt="1" className="absolute left-0 top-0 w-1/2 h-full object-cover" />
+                    <img src={getBlobUrl(resource.images[1])} alt="2" className="absolute right-0 top-0 w-1/2 h-full object-cover" />
+                  </>
+                )}
+                {/* 3 images: one large left, two stacked right */}
+                {resource.images.length === 3 && (
+                  <>
+                    <img src={getBlobUrl(resource.images[0])} alt="1" className="absolute left-0 top-0 w-1/2 h-full object-cover" />
+                    <img src={getBlobUrl(resource.images[1])} alt="2" className="absolute right-0 top-0 w-1/2 h-1/2 object-cover" />
+                    <img src={getBlobUrl(resource.images[2])} alt="3" className="absolute right-0 bottom-0 w-1/2 h-1/2 object-cover" />
+                  </>
+                )}
+                {/* 4 images: 2x2 grid */}
+                {resource.images.length === 4 && (
+                  <>
+                    <img src={getBlobUrl(resource.images[0])} alt="1" className="absolute left-0 top-0 w-1/2 h-1/2 object-cover" />
+                    <img src={getBlobUrl(resource.images[1])} alt="2" className="absolute right-0 top-0 w-1/2 h-1/2 object-cover" />
+                    <img src={getBlobUrl(resource.images[2])} alt="3" className="absolute left-0 bottom-0 w-1/2 h-1/2 object-cover" />
+                    <img src={getBlobUrl(resource.images[3])} alt="4" className="absolute right-0 bottom-0 w-1/2 h-1/2 object-cover" />
+                  </>
+                )}
+                {/* >9 images: 3x3 grid of first 9, +N overlay if more */}
+                {resource.images.length > 9 && (
+                  <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 w-full h-full">
+                    {resource.images.slice(0, 9).map((img, idx) => (
+                      <div key={idx} className="relative w-full h-full">
+                        <img src={getBlobUrl(img)} alt={String(idx + 1)} className="object-cover w-full h-full" />
+                        {idx === 8 && resource.images.length > 9 && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-white text-lg font-bold">
+                            +{resource.images.length - 9}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             {(resource.type === 'pdf') && getBlobUrl(resource.fileData) && (
@@ -410,34 +441,49 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
             <div className="flex items-center gap-2 mb-4">
               <DialogTitle className="text-2xl font-bold text-on-surface dark:text-on-surface line-clamp-1 flex items-center gap-2">
                 {resource.title}
-                {resource.type === 'pdf' && getBlobUrl(resource.fileData) && (
-                  <button
-                    onClick={() => window.open(getBlobUrl(resource.fileData), '_blank', 'noopener,noreferrer')}
-                    className="ml-2 px-4 py-1 flex items-center gap-2 rounded-full bg-surface-container-lowest hover:bg-surface-container-highest focus:outline-none text-sm font-semibold text-on-surface-variant shadow-none"
-                    title="Open in New Tab"
-                  >
-                    <ExternalLink className="w-5 h-5 text-on-surface-variant" />
-                    <span>Open in New Tab</span>
-                  </button>
-                )}
               </DialogTitle>
             </div>
           </DialogHeader>
-          <div className="flex-1 overflow-hidden flex items-center justify-center dark:bg-surface-container-lowest">
-             {resource.type === 'image' && getBlobUrl(resource.fileData) && (
-               <img
-                 src={getBlobUrl(resource.fileData)}
-                 alt={resource.title}
-                 className="object-contain w-full h-full"
-                 onError={(e) => {
-                   const target = e.target as HTMLImageElement;
-                   target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>';
-                 }}
-               />
-             )}
-             {resource.type === 'pdf' && getBlobUrl(resource.fileData) && (
-               <iframe src={getBlobUrl(resource.fileData)} className="w-full h-full border-0"></iframe>
-             )}
+          <div className="flex-1 overflow-hidden flex items-center justify-center dark:bg-surface-container-lowest relative">
+            {resource.type === 'image' && resource.images && resource.images.length > 0 && (
+              <div className="relative w-full h-full flex items-center justify-center">
+                <button
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-surface-container-high rounded-full p-2 shadow hover:bg-surface-container-highest"
+                  onClick={() => setCarouselIndex((prev) => (prev - 1 + resource.images.length) % resource.images.length)}
+                  disabled={resource.images.length <= 1}
+                  style={{ opacity: resource.images.length <= 1 ? 0.5 : 1 }}
+                >
+                  &#8592;
+                </button>
+                <img
+                  src={getBlobUrl(resource.images[carouselIndex])}
+                  alt={`Preview ${carouselIndex + 1}`}
+                  className="object-contain w-full h-full rounded-xl"
+                />
+                <button
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-surface-container-high rounded-full p-2 shadow hover:bg-surface-container-highest"
+                  onClick={() => setCarouselIndex((prev) => (prev + 1) % resource.images.length)}
+                  disabled={resource.images.length <= 1}
+                  style={{ opacity: resource.images.length <= 1 ? 0.5 : 1 }}
+                >
+                  &#8594;
+                </button>
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-surface-container-high px-3 py-1 rounded-full text-xs text-on-surface-variant">
+                  {carouselIndex + 1} / {resource.images.length}
+                </div>
+              </div>
+            )}
+            {/* fallback for single image/fileData */}
+            {resource.type === 'image' && (!resource.images || resource.images.length === 0) && getBlobUrl(resource.fileData) && (
+              <img
+                src={getBlobUrl(resource.fileData)}
+                alt={resource.title}
+                className="object-contain w-full h-full"
+              />
+            )}
+            {resource.type === 'pdf' && getBlobUrl(resource.fileData) && (
+              <iframe src={getBlobUrl(resource.fileData)} className="w-full h-full border-0"></iframe>
+            )}
           </div>
         </DialogContent>
       </Dialog>
