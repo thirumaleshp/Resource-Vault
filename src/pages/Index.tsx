@@ -548,7 +548,7 @@ const Index = () => {
                 />
               </div>
             </div>
-            <div className="flex flex-row gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide pl-4 pr-4">
+            <div className="flex flex-row gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide pl-4 pr-4 md:justify-center">
               {categories.map((category) => (
                 <Button
                   key={category}

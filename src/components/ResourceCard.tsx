@@ -282,19 +282,21 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
                 </div>
               </div>
             )}
-             {resource.type === 'file' && getBlobUrl(resource.fileData) && (
-              <div
-                 className="flex items-center gap-2 p-3 bg-surface-container-lowest rounded-lg cursor-pointer"
-                 onClick={() => setIsViewDetailsOpen(true)}
-              >
-                <div className="p-2 bg-surface-container-high rounded-lg">
-                  {getResourceTypeIcon(resource.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-on-surface truncate">{(resource.fileData as File)?.name || 'file'}</p>
-                  <p className="text-xs text-on-surface-variant">
-                    {(resource.fileData.size / 1024).toFixed(1)} KB
-                  </p>
+             {resource.type === 'file' && resource.fileData && (
+              <div>
+                <h3 className="text-sm font-medium text-on-surface-variant">File Details</h3>
+                <div className="mt-2 p-4 bg-surface-container-lowest rounded-lg flex justify-between items-center">
+                  <div>
+                    <p className="text-on-surface font-medium">{(resource.fileData as File)?.name || 'file'}</p>
+                    <p className="text-on-surface-variant text-sm">
+                      {(resource.fileData.size / 1024).toFixed(1)} KB
+                    </p>
+                  </div>
+                  <a href={getBlobUrl(resource.fileData)} target="_blank" rel="noopener noreferrer" className="inline-block">
+                    <Button variant="outline" size="sm" className="bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant">
+                      <ExternalLink className="w-4 h-4 mr-2" /> Open File
+                    </Button>
+                  </a>
                 </div>
               </div>
             )}
@@ -373,9 +375,11 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
                       {(resource.fileData.size / 1024).toFixed(1)} KB
                     </p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={handleDownload} className="bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant">
-                     <Download className="w-4 h-4 mr-2" /> Download
-                  </Button>
+                  <a href={getBlobUrl(resource.fileData)} target="_blank" rel="noopener noreferrer" className="inline-block">
+                    <Button variant="outline" size="sm" className="bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant">
+                      <ExternalLink className="w-4 h-4 mr-2" /> Open File
+                    </Button>
+                  </a>
                 </div>
               </div>
             )}
