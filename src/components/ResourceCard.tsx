@@ -323,37 +323,27 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
                 )}
               </div>
             )}
-            {(resource.type === 'pdf') && getBlobUrl(resource.fileData) && (
-              <div
-                 className="flex items-center gap-2 p-3 bg-surface-container-lowest rounded-lg cursor-pointer"
-                 onClick={handleViewFile}
-              >
-                <div className="p-2 bg-surface-container-high rounded-lg">
-                  {getResourceTypeIcon(resource.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-on-surface truncate">{(resource.fileData as File)?.name || 'file'}</p>
-                  <p className="text-xs text-on-surface-variant">
-                    {(resource.fileData.size / 1024).toFixed(1)} KB
-                  </p>
-                </div>
-              </div>
-            )}
-             {resource.type === 'file' && resource.fileData && (
+            {(resource.type === 'pdf' || resource.type === 'file') && resource.files && resource.files.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-on-surface-variant">File Details</h3>
-                <div className="mt-2 p-4 bg-surface-container-lowest rounded-lg flex justify-between items-center">
-                  <div>
-                    <p className="text-on-surface font-medium">{(resource.fileData as File)?.name || 'file'}</p>
-                    <p className="text-on-surface-variant text-sm">
-                      {(resource.fileData.size / 1024).toFixed(1)} KB
-                    </p>
-                  </div>
-                  <a href={getBlobUrl(resource.fileData)} target="_blank" rel="noopener noreferrer" className="inline-block">
-                    <Button variant="outline" size="sm" className="bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant">
-                      <ExternalLink className="w-4 h-4 mr-2" /> Open File
-                    </Button>
-                  </a>
+                <h3 className="text-sm font-medium text-on-surface-variant">
+                  {resource.type === 'file' ? 'File Details' : 'PDF Files'}
+                </h3>
+                <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
+                  {resource.files.map((file, idx) => (
+                    <div key={idx} className="p-4 bg-surface-container-lowest rounded-lg flex justify-between items-center">
+                      <div>
+                        <p className="text-on-surface font-medium">{file.name}</p>
+                        <p className="text-on-surface-variant text-sm">{(file.size / 1024).toFixed(1)} KB</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <a href={getBlobUrl(file)} target="_blank" rel="noopener noreferrer" className="inline-block">
+                          <Button variant="outline" size="sm" className="bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant">
+                            <ExternalLink className="w-4 h-4 mr-2" /> Open
+                          </Button>
+                        </a>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -422,17 +412,17 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
                 </a>
               </div>
             )}
-            {resource.type === 'file' && resource.fileData && (
+            {resource.type === 'file' && resource.files && resource.files.length > 0 && (
               <div>
                 <h3 className="text-sm font-medium text-on-surface-variant">File Details</h3>
                 <div className="mt-2 p-4 bg-surface-container-lowest rounded-lg flex justify-between items-center">
                   <div>
-                    <p className="text-on-surface font-medium">{(resource.fileData as File)?.name || 'file'}</p>
+                    <p className="text-on-surface font-medium">{(resource.files[0] as File)?.name || 'file'}</p>
                     <p className="text-on-surface-variant text-sm">
-                      {(resource.fileData.size / 1024).toFixed(1)} KB
+                      {(resource.files[0].size / 1024).toFixed(1)} KB
                     </p>
                   </div>
-                  <a href={getBlobUrl(resource.fileData)} target="_blank" rel="noopener noreferrer" className="inline-block">
+                  <a href={getBlobUrl(resource.files[0])} target="_blank" rel="noopener noreferrer" className="inline-block">
                     <Button variant="outline" size="sm" className="bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant">
                       <ExternalLink className="w-4 h-4 mr-2" /> Open File
                     </Button>
@@ -516,8 +506,8 @@ const ResourceCard = ({ resource, onDelete, getResourceTypeIcon }: ResourceCardP
                 className="object-contain w-full h-full"
               />
             )}
-            {resource.type === 'pdf' && getBlobUrl(resource.fileData) && (
-              <iframe src={getBlobUrl(resource.fileData)} className="w-full h-full border-0"></iframe>
+            {resource.type === 'pdf' && resource.files && resource.files.length > 0 && (
+              <iframe src={getBlobUrl(resource.files[0])} className="w-full h-full border-0"></iframe>
             )}
           </div>
         </DialogContent>

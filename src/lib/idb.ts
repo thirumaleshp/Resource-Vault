@@ -7,7 +7,7 @@ export interface IDBResource {
   category: string;
   createdAt: string;
   tags: string[];
-  fileData?: Blob;
+  files?: Blob[];
 }
 
 const DB_NAME = 'resource-vault-db';

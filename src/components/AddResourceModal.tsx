@@ -25,7 +25,7 @@ interface Resource {
   tags: string[];
   images?: File[];
   fileURL?: string;
-  fileData?: File;
+  files?: File[];
   audioBlob?: Blob;
   audioURL?: string;
 }
@@ -59,7 +59,7 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
       await stopRecording(true); // pass true to indicate we want to wait for audioBlob
     }
     if (!validateForm()) return;
-    onAdd({ ...formData, audioBlob, images: formData.images });
+    onAdd({ ...formData, audioBlob, images: formData.images, files: formData.files });
     onClose();
     resetForm();
     removeAudio();
@@ -102,7 +102,7 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
       return false;
     }
 
-    if ((formData.type === 'image' || formData.type === 'pdf' || formData.type === 'file') && !formData.fileData) {
+    if ((formData.type === 'image' || formData.type === 'pdf' || formData.type === 'file') && !formData.files) {
       toast({
         title: "Missing File",
         description: "Please select a file for this resource type.",
@@ -142,7 +142,7 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
       setFormData(prev => ({
         ...prev,
         images: prev.images ? [...prev.images, ...validFiles] : [...validFiles],
-        fileData: prev.images && prev.images.length > 0 ? prev.images[0] : validFiles[0],
+        files: prev.files ? [...prev.files, ...validFiles] : [...validFiles],
         fileURL: URL.createObjectURL(validFiles[0])
       }));
       return;
@@ -164,7 +164,7 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
       }
       setFormData(prev => ({
         ...prev,
-        fileData: files[0],
+        files: prev.files ? [...prev.files, ...files] : files,
         fileURL: URL.createObjectURL(files[0])
       }));
     }
@@ -315,7 +315,7 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
                   <Label htmlFor="type" className="text-on-surface">Type</Label>
                   <Select
                     value={formData.type}
-                    onValueChange={(value: ResourceType) => setFormData({ ...formData, type: value, content: "", fileData: undefined, fileURL: undefined })}
+                    onValueChange={(value: ResourceType) => setFormData({ ...formData, type: value, content: "", files: [], fileURL: undefined })}
                   >
                     <SelectTrigger className="w-full bg-surface-container-lowest text-on-surface border-0 focus:ring-2 focus:ring-primary/20 rounded-lg shadow-sm">
                       <SelectValue placeholder="Select resource type" />
@@ -487,33 +487,24 @@ const AddResourceModal = ({ isOpen, onClose, onAdd, customTags, onAddCustomCateg
                       variant="outline"
                       onClick={() => fileInputRef.current?.click()}
                       className="ml-2 px-3 py-2 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant"
-                      title="Add more images"
+                      title="Add more files"
                     >
                       <Plus className="w-4 h-4" />
                     </Button>
                   </div>
-                  {formData.fileData && (
-                    <p className="text-sm text-on-surface mt-2">
-                      Selected: {formData.fileData.name}
-                    </p>
-                  )}
-                  {formData.type === 'image' && formData.images && formData.images.length > 0 && (
+                  {formData.files && formData.files.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {formData.images.map((img, idx) => (
-                        <div key={idx} className="relative w-16 h-16 rounded overflow-hidden border border-surface-container-highest">
-                          <img
-                            src={URL.createObjectURL(img)}
-                            alt={`Selected ${idx+1}`}
-                            className="object-cover w-full h-full"
-                          />
+                      {formData.files.map((file, idx) => (
+                        <div key={idx} className="flex items-center gap-1 bg-surface-container-high text-on-surface-variant px-3 py-1 rounded-full text-sm">
+                          {file.name}
                           <button
                             type="button"
-                            className="absolute top-0 right-0 bg-error text-white rounded-full p-1"
+                            className="hover:text-error"
                             onClick={() => setFormData(prev => ({
                               ...prev,
-                              images: prev.images?.filter((_, i) => i !== idx)
+                              files: prev.files?.filter((_, i) => i !== idx)
                             }))}
-                            title="Remove image"
+                            title="Remove file"
                           >
                             <X className="w-3 h-3" />
                           </button>
