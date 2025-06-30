@@ -42,6 +42,4 @@ A modern, offline-first resource management app built with Vite, React, TypeScri
 - Make your changes and add tests if possible
 - Open a pull request with a clear description
 
-## License
-MIT
 
