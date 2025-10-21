@@ -474,6 +474,17 @@ const Index = () => {
           onAddCustomCategory={handleAddCustomCategory}
           onDeleteCustomCategory={handleDeleteCustomCategory}
         />
+        <footer className="fixed bottom-5 left-1/2 -translate-x-1/2 text-center text-on-surface-variant">
+          Profile{" "}
+          <a
+            href="https://thirumalesh.xyz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            @Thirumalesh
+          </a>
+        </footer>
       </div>
     </div>
   );
